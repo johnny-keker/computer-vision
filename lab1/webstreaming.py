@@ -1,21 +1,31 @@
 from imutils.video import FileVideoStream
-from flask import Response
+from flask import Response, request
 from flask import Flask
-from flask import render_template
+from flask import render_template, redirect
 import threading
 import argparse
 import datetime
 import imutils
 import time
 import cv2
+from enum import Enum
 
 outputFrame = None
 lock = threading.Lock()
 
 app = Flask(__name__)
+TARGET_FPS = 30
 
 vs = None
 time.sleep(2.0)
+
+class Mode(Enum):
+    NORMAL = 1
+    BLACK_WHITE = 2
+    TRESHOLD = 3
+
+MODE = Mode.NORMAL
+threshold = 0
 
 @app.route("/")
 def index():
@@ -27,6 +37,25 @@ def video_feed():
 	# type (mime type)
 	return Response(generate(),
 		mimetype = "multipart/x-mixed-replace; boundary=frame")
+ 
+@app.route("/bw")
+def bw():
+    global MODE
+    MODE = Mode.BLACK_WHITE
+    return redirect('/')
+
+@app.route("/normal")
+def normal():
+    global MODE
+    MODE = Mode.NORMAL
+    return redirect('/')
+
+@app.route("/tresh")
+def tresh():
+    global threshold, MODE
+    threshold = int(request.args.get('treshold'))
+    MODE = Mode.TRESHOLD
+    return redirect('/')
 
 def generate():
 	# grab global references to the output frame and lock variables
@@ -50,7 +79,7 @@ def generate():
 
 
 def process_frame():
-    global vs, outputFrame, lock
+    global vs, outputFrame, lock, MODE, threshold
     while True:
         frame = vs.read()
         if frame is None:
@@ -58,6 +87,12 @@ def process_frame():
             vs = FileVideoStream(path=args["video"]).start()
             frame = vs.read()
         frame = imutils.resize(frame, width=400)
+        
+        if MODE == Mode.BLACK_WHITE:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+            (thresh, frame) = cv2.threshold(frame, 127, 255, cv2.THRESH_BINARY)
+        if MODE == Mode.TRESHOLD:
+            (thresh, frame) = cv2.threshold(frame, threshold, 255, cv2.THRESH_BINARY)
 
         timestamp = datetime.datetime.now()
         cv2.putText(frame, timestamp.strftime(
@@ -66,6 +101,8 @@ def process_frame():
         
         with lock:
             outputFrame = frame.copy()
+        
+        time.sleep(1/TARGET_FPS)
         
 if __name__ == '__main__':
 	# construct the argument parser and parse command line arguments
@@ -76,6 +113,8 @@ if __name__ == '__main__':
         help="ephemeral port number of the server (1024 to 65535)")
     ap.add_argument("-v", "--video", type=str, required=True,
         help="path to a video to play")
+    ap.add_argument("-f", "--fps", type=int, required=False,
+        help="target fps, default 30")
     args = vars(ap.parse_args())
     vs = FileVideoStream(path=args["video"]).start()
 	# start a thread that will perform motion detection
