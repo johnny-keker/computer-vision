@@ -105,6 +105,10 @@ was able to get results anyway, yay!:
 
 ![image](https://github.com/johnny-keker/computer-vision/assets/39794543/0920897a-541e-45fa-a3ec-36cc42533d4b)
 
+3. I had to use `python 2.7` since this labwork is based on my previous work, and I couldn't get it to work with python 3,
+looks like they broken tensorflow backend for keras there, or at least significally changed it. And deadline are coming,
+so no cool features like f-strings and type annotations for us, sorry:(
+
 ## Results
 
 The run took ~1h on Ryzen 9 5900X.
