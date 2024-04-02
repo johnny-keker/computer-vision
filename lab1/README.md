@@ -69,6 +69,9 @@ And then you shoud see the application on http://127.0.0.1:8000/
 
 ## Demonstration
 
+![Screencast from 02 04 2024 01 53 03](https://github.com/johnny-keker/computer-vision/assets/39794543/2edebc1c-5763-46b2-b85f-2118d5c2b4c1)
+
+
 ## Conclusions
 
 In this labwork I build app that allows user to play with video stream tresholding in realtime.
